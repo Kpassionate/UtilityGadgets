@@ -15,14 +15,7 @@ db_config = {
         'port': '3306',
         'user': 'root',
         'password': '123456',
-        'database': 'dict',
-    },
-    'test': {
-        'host': '127.0.0.1',
-        'port': '3306',
-        'user': 'root',
-        'password': '123456',
-        'database': 'test',
+        'database': 'qk_dict',
     },
 }
 
@@ -47,6 +40,9 @@ region_dict, region_code = region_db()
 # 获取到地区列表
 region_name = region_dict.keys()
 
+# 添加动态词典（亦可添加自定义词库）
+[jieba.add_word(item) for item in region_dict.keys()]
+jieba.del_word('城区')
 
 # 获取两个字符串的相似度
 def string_similar(str1, str2):
@@ -119,3 +115,9 @@ def main(title, content):
         return -1
 
     return code, flag
+
+
+if __name__ == "__main__":
+    resp = main('藁城区住建部老旧小区改造工程', '河南省')
+    print(resp)
+    print(region_code[resp[0]])
