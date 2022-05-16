@@ -32,6 +32,11 @@ def region_db():
             'name': name,
             'fulltitle': fulltitle
         }
+        _region_dict[fulltitle] = {
+            'code': code,
+            'name': name,
+            'fulltitle': fulltitle
+        }
         region_code[code] = (name, fulltitle)
     return _region_dict, region_code
 
@@ -41,8 +46,10 @@ region_dict, region_code = region_db()
 region_name = region_dict.keys()
 
 # 添加动态词典（亦可添加自定义词库）
-[jieba.add_word(item) for item in region_dict.keys()]
-jieba.del_word('城区')
+[jieba.add_word(fulltitle) for (name, fulltitle) in region_code.values()]
+error_words = ['城区', '东区', '西区', '朝阳区']
+[jieba.del_word(item) for item in error_words]
+
 
 # 获取两个字符串的相似度
 def string_similar(str1, str2):
@@ -58,7 +65,7 @@ def get_region_ratio(address):
     for key in seg_list:
         for name in region_name:
             similar_ratio = string_similar(key, name)
-            if similar_ratio > 0.6:
+            if similar_ratio > 0.7:
                 ratio_dict[similar_ratio].append(name)
     return ratio_dict
 
@@ -100,24 +107,30 @@ def get_region_code_by_re(address):
     return str(max(code_list)) if code_list else 0
 
 
-# 主函数
-def main(title, content):
-    flag = 0  # 0为正则匹配 1位相似度匹配， 优先使用正则匹配码表数据
+def get_code(title, content=None):
     code = get_region_code_by_re(striptags(title))
-    if not code:
+    if not code and content:
         code = get_region_code_by_re(striptags(content))
     if not code:
-        flag = 1
         code = get_region_code_by_similar(striptags(title))
-    if not code:
+    if not code and content:
         code = get_region_code_by_similar(striptags(content))
     if not code:
         return -1
+    return code
 
-    return code, flag
+
+# 主函数
+def main(title):
+    code = get_code(title)
+    if code == -1:
+        # 优先使用 fulltitle 分词 再用name
+        [jieba.add_word(item) for item in region_dict.keys()]
+        code = get_code(title)
+    return code
 
 
 if __name__ == "__main__":
-    resp = main('藁城区住建部老旧小区改造工程', '河南省')
+    resp = main('北京市朝阳区')
     print(resp)
-    print(region_code[resp[0]])
+    print(region_code[resp])
