@@ -11,10 +11,10 @@ from db_handler import execute_raw_sql, Database
 
 db_config = {
     'default': {
-        'host': '172.21.72.148',
+        'host': '127.0.0.1',
         'port': '3306',
         'user': 'root',
-        'password': 'JMFIuOx2',
+        'password': '1234',
         'database': 'qk_dict',
     },
 }
