@@ -11,10 +11,10 @@ from db_handler import execute_raw_sql, Database
 
 db_config = {
     'default': {
-        'host': '127.0.0.1',
+        'host': '172.21.72.148',
         'port': '3306',
         'user': 'root',
-        'password': '123456',
+        'password': 'JMFIuOx2',
         'database': 'qk_dict',
     },
 }
@@ -107,27 +107,33 @@ def get_region_code_by_re(address):
     return str(max(code_list)) if code_list else 0
 
 
-def get_code(title, content=None):
+def re_code(title, content=None):
     code = get_region_code_by_re(striptags(title))
     if not code and content:
         code = get_region_code_by_re(striptags(content))
-    if not code:
-        code = get_region_code_by_similar(striptags(title))
+    return code
+
+
+def similar_code(title, content=None):
+    code = get_region_code_by_similar(striptags(title))
     if not code and content:
         code = get_region_code_by_similar(striptags(content))
-    if not code:
-        return -1
     return code
 
 
 # 主函数
-def main(title):
-    code = get_code(title)
-    if code == -1:
-        # 优先使用 fulltitle 分词 再用name
+def main(title, content=None):
+    """
+    优先使用正则匹配。
+    """
+    code = re_code(title, content)
+    if not code:
+        # 增加name分词
         [jieba.add_word(item) for item in region_dict.keys()]
-        code = get_code(title)
-    return code
+        code = re_code(title, content)
+    if not code:
+        code = similar_code(title, content)
+    return code or -1
 
 
 if __name__ == "__main__":
