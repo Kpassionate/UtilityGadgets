@@ -18,7 +18,7 @@ in2csv data.json > data.csv
 ```
 
 ### Print column names
-csvcut -n data.csv
+```csvcut -n data.csv```
 
 Select a subset of columns:
 ```angular2html

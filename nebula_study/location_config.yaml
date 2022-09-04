@@ -1,0 +1,372 @@
+version: v3
+description: company_overview
+removeTempFiles: false
+clientSettings:
+  retry: 3
+  concurrency: 16
+  channelBufferSize: 128
+  space: company_overview
+  connection:
+    user: root
+    password: vesoft
+    address: 127.0.0.1:9669
+  postStart:
+    commands: |
+      UPDATE CONFIGS storage:wal_ttl=100;
+      UPDATE CONFIGS storage:rocksdb_column_family_options = { disable_auto_compactions = true };
+      DROP SPACE IF EXISTS company_overview;
+      CREATE SPACE IF NOT EXISTS company_overview(partition_num=60, replica_factor=1, vid_type=fixed_string(60));
+      USE company_overview;
+      CREATE TAG IF NOT EXISTS company(ent_id int not null, ent_name string);
+      CREATE TAG IF NOT EXISTS person(person_id int, person_name string);
+      CREATE TAG IF NOT EXISTS contact(contact_info string);
+      CREATE TAG IF NOT EXISTS bid(mid int, title string, amount string);
+      CREATE TAG IF NOT EXISTS cases(mid string, case_num string, title string, case_type string);
+      CREATE EDGE faren_company(edge_type int default 1);
+      CREATE EDGE manager_company(position string, edge_type int default 2);
+      CREATE EDGE inv_company(edge_type int default 3);
+      CREATE EDGE lx_company(contact string, contact_type int, edge_type int default 4);
+      CREATE EDGE invest(amount string, radio string, edge_type int default 5);
+      CREATE EDGE branch(edge_type int default 6);
+      CREATE EDGE case_company(role_type string, edge_type int default 8);
+      CREATE EDGE bid_company(role_type string, edge_type int default 9);
+    afterPeriod: 20s
+  preStop:
+    commands: |
+      UPDATE CONFIGS storage:rocksdb_column_family_options = { disable_auto_compactions = false };
+      UPDATE CONFIGS storage:wal_ttl=86400;
+
+logPath: ./err/test.log
+files:
+  - path: ../orgion_csv/csv_file/bid.csv
+    failDataPath: ./err/bid
+    batchSize: 128
+    inOrder: false
+    type: csv
+    csv:
+      withHeader: false
+      withLabel: false
+    schema:
+      type: vertex
+      vertex:
+        vid:
+          type: string
+          index: 0
+        tags:
+          - name: bid
+            props:
+              - name: mid
+                type: int
+                index: 1
+              - name: title
+                type: string
+                index: 2
+              - name: amount
+                type: string
+                index: 3
+
+  - path: ../orgion_csv/csv_file/bid_company.csv
+    failDataPath: ./err/bid_company
+    batchSize: 128
+    inOrder: false
+    type: csv
+    csv:
+      withHeader: false
+      withLabel: false
+    schema:
+      type: edge
+      edge:
+        name: bid_company
+        withRanking: false
+        srcVID:
+          index: 0
+          type: string
+        dstVID:
+          index: 1
+          type: string
+        props:
+          - name: role_type
+            type: string
+            index: 2
+          - name: edge_type
+            type: int
+
+  - path: ../orgion_csv/csv_file/branch.csv
+    failDataPath: ./err/branch
+    batchSize: 128
+    inOrder: false
+    type: csv
+    csv:
+      withHeader: false
+      withLabel: false
+    schema:
+      type: edge
+      edge:
+        name: branch
+        withRanking: false
+        srcVID:
+          index: 0
+          type: string
+        dstVID:
+          index: 1
+          type: string
+        props:
+          - name: edge_type
+            type: int
+
+  - path: ../orgion_csv/csv_file/case_company.csv
+    failDataPath: ./err/case_company
+    batchSize: 128
+    inOrder: false
+    type: csv
+    csv:
+      withHeader: false
+      withLabel: false
+    schema:
+      type: edge
+      edge:
+        name: case_company
+        withRanking: false
+        srcVID:
+          index: 0
+          type: string
+        dstVID:
+          index: 1
+          type: string
+        props:
+          - name: role_type
+            type: string
+            index: 2
+          - name: edge_type
+            type: int
+
+  - path: ../orgion_csv/csv_file/cases.csv
+    failDataPath: ./err/cases
+    batchSize: 128
+    inOrder: false
+    type: csv
+    csv:
+      withHeader: false
+      withLabel: false
+    schema:
+      type: vertex
+      vertex:
+        vid:
+          type: string
+          index: 0
+        tags:
+          - name: cases
+            props:
+              - name: mid
+                type: string
+                index: 0
+              - name: case_num
+                type: string
+                index: 1
+              - name: title
+                type: string
+                index: 2
+              - name: case_type
+                type: string
+                index: 3
+
+  - path: ../orgion_csv/csv_file/company.csv
+    failDataPath: ./err/company
+    batchSize: 128
+    inOrder: false
+    type: csv
+    csv:
+      withHeader: false
+      withLabel: false
+    schema:
+      type: vertex
+      vertex:
+        vid:
+          type: string
+          index: 0
+        tags:
+          - name: company
+            props:
+              - name: ent_id
+                type: int
+                index: 1
+              - name: ent_name
+                type: string
+                index: 2
+
+  - path: ../orgion_csv/csv_file/contact.csv
+    failDataPath: ./err/contact
+    batchSize: 128
+    inOrder: false
+    type: csv
+    csv:
+      withHeader: false
+      withLabel: false
+    schema:
+      type: vertex
+      vertex:
+        vid:
+          type: string
+          index: 0
+        tags:
+          - name: contact
+            props:
+              - name: contact_info
+                type: string
+                index: 1
+
+  - path: ../orgion_csv/csv_file/fr_company.csv
+    failDataPath: ./err/faren_company
+    batchSize: 128
+    inOrder: false
+    type: csv
+    csv:
+      withHeader: false
+      withLabel: false
+    schema:
+      type: edge
+      edge:
+        name: faren_company
+        withRanking: false
+        srcVID:
+          index: 0
+          type: string
+        dstVID:
+          index: 1
+          type: string
+        props:
+          - name: edge_type
+            type: int
+
+
+  - path: ../orgion_csv/csv_file/inv_company.csv
+    failDataPath: ./err/inv_company
+    batchSize: 128
+    inOrder: false
+    type: csv
+    csv:
+      withHeader: false
+      withLabel: false
+    schema:
+      type: edge
+      edge:
+        name: inv_company
+        withRanking: false
+        srcVID:
+          index: 0
+          type: string
+        dstVID:
+          index: 1
+          type: string
+        props:
+          - name: edge_type
+            type: int
+
+  - path: ../orgion_csv/csv_file/invest.csv
+    failDataPath: ./err/invest
+    batchSize: 128
+    inOrder: false
+    type: csv
+    csv:
+      withHeader: false
+      withLabel: false
+    schema:
+      type: edge
+      edge:
+        name: invest
+        withRanking: false
+        srcVID:
+          index: 0
+          type: string
+        dstVID:
+          index: 1
+          type: string
+        props:
+          - name: amount
+            type: string
+            index: 2
+          - name: radio
+            type: string
+            index: 3
+          - name: edge_type
+            type: int
+
+  - path: ../orgion_csv/csv_file/lx_company.csv
+    failDataPath: ./err/lx_company
+    batchSize: 128
+    inOrder: false
+    type: csv
+    csv:
+      withHeader: false
+      withLabel: false
+    schema:
+      type: edge
+      edge:
+        name: lx_company
+        withRanking: false
+        srcVID:
+          index: 0
+          type: string
+        dstVID:
+          index: 1
+          type: string
+        props:
+          - name: contact
+            type: string
+            index: 2
+          - name: contact_type
+            type: int
+            index: 3
+          - name: edge_type
+            type: int
+
+  - path: ../orgion_csv/csv_file/manager_company.csv
+    failDataPath: ./err/manager_company
+    batchSize: 128
+    inOrder: false
+    type: csv
+    csv:
+      withHeader: false
+      withLabel: false
+    schema:
+      type: edge
+      edge:
+        name: manager_company
+        withRanking: false
+        srcVID:
+          index: 0
+          type: string
+        dstVID:
+          index: 1
+          type: string
+        props:
+          - name: position
+            type: string
+            index: 2
+          - name: edge_type
+            type: int
+            index: 3
+
+  - path: ../orgion_csv/csv_file/person.csv
+    failDataPath: ./err/person
+    batchSize: 128
+    inOrder: false
+    type: csv
+    csv:
+      withHeader: false
+      withLabel: false
+    schema:
+      type: vertex
+      vertex:
+        vid:
+          type: string
+          index: 0
+        tags:
+          - name: person
+            props:
+              - name: person_id
+                type: int
+                index: 1
+              - name: person_name
+                type: string
+                index: 2

@@ -22,7 +22,7 @@ async def get_es_data(url):
 
 
 async def main():
-    urls = ['http://localhost:9200/flights/_search'] * 10000
+    urls = ['http://localhost:9200/flights/_search'] * 100
     async with Pool() as pool:
         print(pool.process_count)
         index = 0
