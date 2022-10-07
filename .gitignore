@@ -16,3 +16,4 @@
 /log/
 !*.sh
 .thumbnails
+./report_sys/report_files/
