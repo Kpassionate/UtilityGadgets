@@ -5,3 +5,5 @@ data_list = [{'project_id': '14', 'project_name': '项目名称'}, {'project_id'
 data_list.insert(0, [])
 res = reduce(lambda x, y: x if y in x else x + [y], data_list)
 print(res)
+
+print(len(data_list))
